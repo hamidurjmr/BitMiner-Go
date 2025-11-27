@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BitMiner Go - Live Bitcoin Mining</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        :root {
+            --primary: #f7931a;
+            --primary-dark: #e07c0c;
+            --primary-light: #f8a54a;
+            --background: #0a0a0a;
+            --surface: #1a1a1a;
+            --card: #2a2a2a;
+            --text: #f5f5f5;
+            --text-secondary: #b0b0b0;
+            --danger: #ff4444;
+            --warning: #ffbb33;
+            --success: #00c853;
+        }
+        
+        body {
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 0;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(247, 147, 26, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(247, 147, 26, 0.05) 0%, transparent 50%);
+        }
+        
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: var(--surface);
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            padding: 20px 16px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(247, 147, 26, 0.3);
+        }
+        
+        .app-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        
+        .app-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background: var(--card);
+            border-bottom: 1px solid rgba(247, 147, 26, 0.3);
+        }
+        
+        .nav-tab {
+            flex: 1;
+            padding: 16px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .nav-tab.active {
+            color: var(--primary-light);
+            border-bottom-color: var(--primary);
+        }
+        
+        /* Screen Management */
+        .screen {
+            display: none;
+            padding: 20px 16px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        /* Card Components */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(247, 147, 26, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-light);
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0;
+        }
+        
+        .stat-item {
+            background: rgba(247, 147, 26, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid rgba(247, 147, 26, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 8px 0;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Mining Animation */
+        .mining-container {
+            background: #000;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+            border: 1px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .mining-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .mining-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--danger);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.active {
+            background: var(--primary);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .hash-display {
+            background: #000;
+            height: 120px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            color: var(--primary);
+        }
+        
+        .hash-line {
+            padding: 4px 0;
+            animation: scrollUp 8s linear infinite;
+            white-space: nowrap;
+        }
+        
+        @keyframes scrollUp {
+            0% { transform: translateY(120px); opacity: 0; }
+            5% { opacity: 1; }
+            95% { opacity: 1; }
+            100% { transform: translateY(-120px); opacity: 0; }
+        }
+        
+        /* Real-time Mining Indicator */
+        .mining-indicator {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+        
+        .mining-rate {
+            font-weight: bold;
+            color: var(--success);
+        }
+        
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 8px 0;
+            box-shadow: 0 4px 12px rgba(247, 147, 26, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(247, 147, 26, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+        }
+        
+        /* Forms */
+        .input-group {
+            margin: 16px 0;
+        }
+        
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(247, 147, 26, 0.3);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(247, 147, 26, 0.2);
+        }
+        
+        /* Payment Methods */
+        .payment-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .payment-method {
+            background: var(--card);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .payment-method.selected {
+            border-color: var(--primary);
+            background: rgba(247, 147, 26, 0.1);
+        }
+        
+        .crypto-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        
+        /* Transaction History */
+        .transaction-list {
+            margin-top: 16px;
+        }
+        
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border-left: 4px solid transparent;
+        }
+        
+        .transaction-item.pending {
+            border-left-color: var(--warning);
+        }
+        
+        .transaction-item.completed {
+            border-left-color: var(--success);
+        }
+        
+        .transaction-amount {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+        
+        .transaction-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--card);
+            padding: 16px 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transition: transform 0.3s;
+            max-width: 90%;
+        }
+        
+        .notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        
+        /* Key Purchase */
+        .key-purchase {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .key-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 16px 0;
+        }
+        
+        .key-duration {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+        
+        /* Telegram Instructions */
+        .telegram-instructions {
+            background: rgba(0, 136, 204, 0.1);
+            border: 1px solid rgba(0, 136, 204, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        
+        .telegram-link {
+            display: inline-block;
+            background: #0088cc;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 380px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .payment-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Live Mining Counter */
+        .live-mining {
+            background: rgba(0, 200, 83, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .mining-counter {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--success);
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="app-title">BitMiner Go</div>
+            <div class="app-subtitle">Live Bitcoin Mining</div>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="showScreen('dashboard')">Mining</div>
+            <div class="nav-tab" onclick="showScreen('withdraw')">Withdraw</div>
+            <div class="nav-tab" onclick="showScreen('history')">History</div>
+        </div>
+        
+        <!-- Dashboard Screen -->
+        <div id="dashboard" class="screen active">
+            <!-- Mining Status Card -->
+            <div class="card">
+                <div class="mining-header">
+                    <div class="mining-status">
+                        <div class="status-dot" id="statusDot"></div>
+                        <span id="statusText">MINER OFFLINE</span>
+                    </div>
+                    <div id="hashRate">0.00 TH/s</div>
+                </div>
+                
+                <div class="hash-display" id="hashDisplay">
+                    <!-- Hash lines will be generated by JavaScript -->
+                </div>
+
+                <!-- Live Mining Counter -->
+                <div class="live-mining" id="liveMining" style="display: none;">
+                    <div class="stat-label">LIVE MINING</div>
+                    <div class="mining-counter" id="miningCounter">+0.000000202 BTC</div>
+                    <div class="stat-label">EVERY SECOND</div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="miningProgress" style="width: 0%"></div>
+                </div>
+                
+                <div class="btn" id="miningBtn" onclick="toggleMining()">START MINING</div>
+            </div>
+            
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Current Session</div>
+                    <div class="stat-value" id="sessionEarnings">0.000000 BTC</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total Mined</div>
+                    <div class="stat-value" id="totalEarnings">0.000000 BTC</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Balance</div>
+                    <div class="stat-value" id="currentBalance">0.000000 BTC</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Active Time</div>
+                    <div class="stat-value" id="activeTime">0h 0m 0s</div>
+                </div>
+            </div>
+            
+            <!-- License Status -->
+            <div class="card">
+                <div class="card-title">License Status</div>
+                <div id="licenseStatus">No active license</div>
+                <div class="btn btn-secondary" onclick="showScreen('purchase')">PURCHASE LICENSE</div>
+            </div>
+
+            <!-- Real-time Earnings -->
+            <div class="card">
+                <div class="card-title">Mining Statistics</div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Hash Rate</div>
+                        <div class="stat-value" id="currentHashRate">0 TH/s</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Mining Speed</div>
+                        <div class="stat-value" id="miningSpeed">0 BTC/s</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Withdraw Screen -->
+        <div id="withdraw" class="screen">
+            <div class="card">
+                <div class="card-title">Withdraw Bitcoin</div>
+                
+                <div class="input-group">
+                    <div class="input-label">Available Balance</div>
+                    <div class="stat-value" id="withdrawBalance">0.000000 BTC</div>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-label">BTC Address</div>
+                    <input type="text" class="input-field" id="btcAddress" placeholder="Enter your Bitcoin address">
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-label">Amount (Minimum: 0.009 BTC)</div>
+                    <input type="number" class="input-field" id="withdrawAmount" placeholder="0.009" step="0.001" min="0.009">
+                </div>
+                
+                <div class="btn" onclick="requestWithdrawal()">WITHDRAW BTC</div>
+                <div class="btn btn-secondary" onclick="showScreen('dashboard')">BACK TO MINING</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Withdrawal Rules</div>
+                <ul style="padding-left: 20px; color: var(--text-secondary); line-height: 1.6;">
+                    <li>Minimum withdrawal: 0.009 BTC</li>
+                    <li>Processing time: 2-6 hours</li>
+                    <li>Network fee: 0.0005 BTC</li>
+                    <li>Daily limit: 0.5 BTC</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Transaction History -->
+        <div id="history" class="screen">
+            <div class="card">
+                <div class="card-title">Transaction History</div>
+                <div class="transaction-list" id="transactionList">
+                    <!-- Transactions will be added here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Purchase License Screen -->
+        <div id="purchase" class="screen">
+            <div class="card">
+                <div class="card-title">Purchase Mining License</div>
+                
+                <div class="key-purchase">
+                    <div class="key-price">$50</div>
+                    <div class="key-duration">72-Hour Mining License</div>
+                    <div class="btn" onclick="showScreen('payment')">CONTINUE TO PAYMENT</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">License Features</div>
+                <ul style="padding-left: 20px; color: var(--text-secondary); line-height: 1.6;">
+                    <li>72 hours of continuous mining</li>
+                    <li>Earnings: 0.000000202 BTC per second</li>
+                    <li>Professional mining algorithm</li>
+                    <li>24/7 technical support</li>
+                    <li>Automatic payouts</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Payment Screen -->
+        <div id="payment" class="screen">
+            <div class="card">
+                <div class="card-title">Select Payment Method</div>
+                
+                <div class="payment-methods" id="paymentMethods">
+                    <!-- Payment methods will be generated by JavaScript -->
+                </div>
+                
+                <div id="paymentDetails" style="display: none;">
+                    <div class="input-group">
+                        <div class="input-label">Send Exactly</div>
+                        <div class="stat-value" id="paymentAmount">0.00055 BTC</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-label">To Address</div>
+                        <div class="input-field" style="background: #000; font-family: monospace; font-size: 0.8rem;" id="paymentAddress"></div>
+                    </div>
+                    
+                    <div class="telegram-instructions">
+                        <div class="card-title">Get Your License Key</div>
+                        <p>After payment:</p>
+                        <ol style="padding-left: 20px; margin: 10px 0; line-height: 1.6;">
+                            <li>Take screenshot of payment confirmation</li>
+                            <li>Send screenshot to our Telegram</li>
+                            <li>Receive your license key via Telegram</li>
+                            <li>Activate key in the app to start mining</li>
+                        </ol>
+                        <a href="https://t.me/HamidurYtG" class="telegram-link" target="_blank">
+                            📱 Open Telegram
+                        </a>
+                    </div>
+                    
+                    <div class="btn" onclick="simulatePayment()">I'VE PAID & SENT SCREENSHOT</div>
+                    <div class="btn btn-secondary" onclick="showScreen('purchase')">CANCEL</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Activation Screen -->
+        <div id="activation" class="screen">
+            <div class="card">
+                <div class="card-title">Activate License Key</div>
+                
+                <div class="input-group">
+                    <div class="input-label">Enter License Key from Telegram</div>
+                    <input type="text" class="input-field" id="licenseKey" placeholder="Enter your 10-character key" maxlength="10">
+                </div>
+                
+                <div class="btn" onclick="activateLicenseKey()">ACTIVATE & START MINING</div>
+                <div class="btn btn-secondary" onclick="showScreen('purchase')">BACK TO PURCHASE</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">How to Get Your Key</div>
+                <div class="telegram-instructions">
+                    <p>1. Make payment using any cryptocurrency</p>
+                    <p>2. Take screenshot of payment confirmation</p>
+                    <p>3. Send screenshot to: 
+                        <a href="https://t.me/HamidurYtG" style="color: var(--primary);">@HamidurYtG</a>
+                    </p>
+                    <p>4. You will receive your license key via Telegram</p>
+                    <p>5. Enter the key here to activate mining</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div>BitMiner Go © 2024</div>
+            <div style="margin-top: 8px; font-size: 0.7rem;">Live Bitcoin Mining - 0.000000202 BTC/second</div>
+        </div>
+        
+        <!-- Notification -->
+        <div class="notification" id="notification">
+            <div id="notificationMessage">Notification</div>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        const state = {
+            isMining: false,
+            activeKey: null,
+            keyExpiry: null,
+            balance: 0, // in BTC
+            totalEarnings: 0, // in BTC
+            sessionEarnings: 0, // in BTC
+            miningStartTime: null,
+            transactions: [],
+            selectedPayment: null,
+            miningInterval: null,
+            miningRate: 0.000000202 // BTC per second
+        };
+
+        // Valid license keys (hidden from user)
+        const validKeys = [
+            "HFAIDTHADM", "MNAHUSHDYT", "LOMATHDNOO", 
+            "JATENSYGBKK", "WOQGATSNKJ", "QPURNKSHYZ", "MALAYEHAHS"
+        ];
+
+        // Payment methods
+        const paymentMethods = [
+            { id: 'btc', name: 'Bitcoin', amount: '0.00055', address: 'bc1qkrvuxrrjm9t96jdng86mhep29rvf4ezupepakx', icon: '₿' },
+            { id: 'eth', name: 'Ethereum', amount: '0.017', address: '0x8Ed272B8003eC72F434929EB7E712dea2772A360', icon: 'Ξ' },
+            { id: 'usdt', name: 'USDT', amount: '50', address: 'TNF2n1mc56nbXwHi1FXrXckXc74RWuYDux', icon: '💵' },
+            { id: 'trx', name: 'TRON', amount: '180', address: 'TNF2n1mc56nbXwHi1FXrXckXc74RWuYDux', icon: '🔄' },
+            { id: 'bnb', name: 'BNB', amount: '0.056', address: '0x8Ed272B8003eC72F434929EB7E712dea2772A360', icon: 'ⓑ' },
+            { id: 'ltc', name: 'Litecoin', amount: '0.58', address: 'LS8Cb6ve24tRaULwj9XfoYJDcRTbSbKr2s', icon: 'Ł' }
+        ];
+
+        // Initialize app
+        function initApp() {
+            loadState();
+            renderPaymentMethods();
+            updateHashDisplay();
+            updateDashboard();
+            
+            // Check for expired keys
+            checkKeyExpiry();
+        }
+
+        // Load state from localStorage
+        function loadState() {
+            const saved = localStorage.getItem('bitminer-live-state');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                Object.assign(state, parsed);
+                
+                // Convert string dates back to Date objects
+                if (state.keyExpiry) state.keyExpiry = new Date(state.keyExpiry);
+                if (state.miningStartTime) state.miningStartTime = new Date(state.miningStartTime);
+                
+                // Restart mining if license is still valid
+                if (state.isMining && state.activeKey && state.keyExpiry > new Date()) {
+                    startLiveMining();
+                }
+            }
+        }
+
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('bitminer-live-state', JSON.stringify(state));
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            document.getElementById('notificationMessage').textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Show screen and update navigation
+        function showScreen(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Show selected screen
+            document.getElementById(screenId).classList.add('active');
+            
+            // Update navigation tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Update active tab based on screen
+            if (screenId === 'dashboard') {
+                document.querySelectorAll('.nav-tab')[0].classList.add('active');
+            } else if (screenId === 'withdraw') {
+                document.querySelectorAll('.nav-tab')[1].classList.add('active');
+                updateWithdrawScreen();
+            } else if (screenId === 'history') {
+                document.querySelectorAll('.nav-tab')[2].classList.add('active');
+                updateHistoryScreen();
+            }
+        }
+
+        // Render payment methods
+        function renderPaymentMethods() {
+            const container = document.getElementById('paymentMethods');
+            container.innerHTML = '';
+            
+            paymentMethods.forEach(method => {
+                const element = document.createElement('div');
+                element.className = 'payment-method';
+                element.innerHTML = `
+                    <div class="crypto-icon">${method.icon}</div>
+                    <div>${method.name}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">${method.amount}</div>
+                `;
+                element.addEventListener('click', () => selectPaymentMethod(method));
+                container.appendChild(element);
+            });
+        }
+
+        // Select payment method
+        function selectPaymentMethod(method) {
+            state.selectedPayment = method;
+            
+            // Update UI
+            document.querySelectorAll('.payment-method').forEach(el => {
+                el.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // Show payment details
+            document.getElementById('paymentAmount').textContent = `${method.amount} ${method.name}`;
+            document.getElementById('paymentAddress').textContent = method.address;
+            document.getElementById('paymentDetails').style.display = 'block';
+        }
+
+        // Simulate payment process
+        function simulatePayment() {
+            if (!state.selectedPayment) {
+                showNotification('Please select a payment method');
+                return;
+            }
+            
+            showNotification('Payment confirmed! Please check Telegram for your license key.');
+            
+            // Show activation screen after payment
+            setTimeout(() => {
+                showScreen('activation');
+            }, 2000);
+        }
+
+        // Activate license key from Telegram
+        function activateLicenseKey() {
+            const keyInput = document.getElementById('licenseKey');
+            const key = keyInput.value.trim().toUpperCase();
+            
+            if (!key) {
+                showNotification('Please enter your license key');
+                return;
+            }
+            
+            if (key.length !== 10) {
+                showNotification('License key must be 10 characters');
+                return;
+            }
+            
+            if (validKeys.includes(key)) {
+                state.activeKey = key;
+                state.keyExpiry = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
+                state.isMining = true;
+                state.miningStartTime = new Date();
+                state.sessionEarnings = 0;
+                
+                saveState();
+                updateDashboard();
+                startLiveMining();
+                showScreen('dashboard');
+                
+                showNotification('License activated! Live mining started at 0.000000202 BTC/second.');
+                
+                // Clear the input
+                keyInput.value = '';
+            } else {
+                showNotification('Invalid license key. Please check and try again.');
+            }
+        }
+
+        // Start live mining
+        function startLiveMining() {
+            // Clear any existing interval
+            if (state.miningInterval) {
+                clearInterval(state.miningInterval);
+            }
+            
+            // Start real-time mining
+            state.miningInterval = setInterval(() => {
+                if (state.isMining && state.activeKey && state.keyExpiry > new Date()) {
+                    // Add 0.000000202 BTC every second
+                    state.balance += state.miningRate;
+                    state.totalEarnings += state.miningRate;
+                    state.sessionEarnings += state.miningRate;
+                    
+                    updateDashboard();
+                    saveState();
+                    
+                    // Add mining transaction every minute
+                    if (Math.floor(Date.now() / 1000) % 60 === 0) {
+                        state.transactions.unshift({
+                            type: 'mining',
+                            amount: (state.miningRate * 60).toFixed(8),
+                            date: new Date().toLocaleTimeString(),
+                            status: 'completed'
+                        });
+                    }
+                } else {
+                    // Stop mining if license expired or mining paused
+                    clearInterval(state.miningInterval);
+                    state.miningInterval = null;
+                }
+            }, 1000); // Update every second
+        }
+
+        // Toggle mining state
+        function toggleMining() {
+            if (!state.activeKey || state.keyExpiry < new Date()) {
+                showNotification('Please purchase and activate a mining license first');
+                showScreen('purchase');
+                return;
+            }
+            
+            state.isMining = !state.isMining;
+            if (state.isMining) {
+                state.miningStartTime = new Date();
+                startLiveMining();
+                showNotification('Live mining started at 0.000000202 BTC/second');
+            } else {
+                if (state.miningInterval) {
+                    clearInterval(state.miningInterval);
+                    state.miningInterval = null;
+                }
+                showNotification('Mining paused');
+            }
+            
+            updateDashboard();
+            saveState();
+        }
+
+        // Update mining dashboard
+        function updateDashboard() {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const miningBtn = document.getElementById('miningBtn');
+            const miningProgress = document.getElementById('miningProgress');
+            const liveMining = document.getElementById('liveMining');
+            
+            // Update mining status
+            if (state.isMining && state.activeKey && state.keyExpiry > new Date()) {
+                statusDot.className = 'status-dot active';
+                statusText.textContent = 'LIVE MINING ACTIVE';
+                miningBtn.textContent = 'PAUSE MINING';
+                miningBtn.style.background = 'linear-gradient(135deg, var(--warning) 0%, #ff8800 100%)';
+                liveMining.style.display = 'block';
+                
+                // Update progress based on time remaining
+                if (state.keyExpiry) {
+                    const totalTime = 3 * 24 * 60 * 60 * 1000; // 3 days
+                    const timeLeft = state.keyExpiry - new Date();
+                    const progress = ((totalTime - timeLeft) / totalTime) * 100;
+                    miningProgress.style.width = `${Math.min(progress, 100)}%`;
+                }
+            } else {
+                statusDot.className = 'status-dot';
+                statusText.textContent = 'MINER OFFLINE';
+                miningBtn.textContent = 'START MINING';
+                miningBtn.style.background = '';
+                miningProgress.style.width = '0%';
+                liveMining.style.display = 'none';
+            }
+            
+            // Update stats
+            document.getElementById('sessionEarnings').textContent = `${state.sessionEarnings.toFixed(8)} BTC`;
+            document.getElementById('totalEarnings').textContent = `${state.totalEarnings.toFixed(8)} BTC`;
+            document.getElementById('currentBalance').textContent = `${state.balance.toFixed(8)} BTC`;
+            document.getElementById('hashRate').textContent = state.isMining ? 
+                `${(140 + Math.random() * 20).toFixed(2)} TH/s` : '0.00 TH/s';
+            
+            // Update active time
+            if (state.miningStartTime && state.isMining) {
+                const activeTime = Date.now() - state.miningStartTime;
+                const hours = Math.floor(activeTime / (1000 * 60 * 60));
+                const minutes = Math.floor((activeTime % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((activeTime % (1000 * 60)) / 1000);
+                document.getElementById('activeTime').textContent = `${hours}h ${minutes}m ${seconds}s`;
+            } else {
+                document.getElementById('activeTime').textContent = '0h 0m 0s';
+            }
+            
+            // Update license status
+            const licenseStatus = document.getElementById('licenseStatus');
+            if (state.activeKey && state.keyExpiry > new Date()) {
+                const timeLeft = state.keyExpiry - new Date();
+                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                licenseStatus.textContent = `Active • ${days}d ${hours}h ${minutes}m remaining`;
+            } else {
+                licenseStatus.textContent = 'No active license';
+            }
+            
+            // Update mining statistics
+            document.getElementById('currentHashRate').textContent = state.isMining ? 
+                `${(140 + Math.random() * 20).toFixed(0)} TH/s` : '0 TH/s';
+            document.getElementById('miningSpeed').textContent = state.isMining ? 
+                '0.000000202 BTC/s' : '0 BTC/s';
+        }
+
+        // Update hash display
+        function updateHashDisplay() {
+            const container = document.getElementById('hashDisplay');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 12; i++) {
+                const hashLine = document.createElement('div');
+                hashLine.className = 'hash-line';
+                hashLine.textContent = generateHash();
+                hashLine.style.animationDelay = (i * 0.8) + 's';
+                container.appendChild(hashLine);
+            }
+        }
+
+        // Generate random hash
+        function generateHash() {
+            const chars = '0123456789abcdef';
+            let hash = '';
+            for (let i = 0; i < 64; i++) {
+                hash += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return hash;
+        }
+
+        // Check for expired keys
+        function checkKeyExpiry() {
+            if (state.activeKey && state.keyExpiry < new Date()) {
+                state.isMining = false;
+                state.activeKey = null;
+                if (state.miningInterval) {
+                    clearInterval(state.miningInterval);
+                    state.miningInterval = null;
+                }
+                showNotification('Your mining license has expired');
+                updateDashboard();
+                saveState();
+            }
+        }
+
+        // Update withdraw screen
+        function updateWithdrawScreen() {
+            document.getElementById('withdrawBalance').textContent = `${state.balance.toFixed(8)} BTC`;
+        }
+
+        // Update history screen
+        function updateHistoryScreen() {
+            const container = document.getElementById('transactionList');
+            container.innerHTML = '';
+            
+            if (state.transactions.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">No transactions yet</div>';
+                return;
+            }
+            
+            state.transactions.forEach(tx => {
+                const element = document.createElement('div');
+                element.className = `transaction-item ${tx.status}`;
+                element.innerHTML = `
+                    <div>
+                        <div>${tx.type.toUpperCase()}</div>
+                        <div class="transaction-date">${tx.date}</div>
+                    </div>
+                    <div class="transaction-amount">${tx.amount} BTC</div>
+                `;
+                container.appendChild(element);
+            });
+        }
+
+        // Request withdrawal
+        function requestWithdrawal() {
+            const address = document.getElementById('btcAddress').value.trim();
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            
+            if (!address) {
+                showNotification('Please enter your BTC address');
+                return;
+            }
+            
+            if (!address.startsWith('bc1') && !address.startsWith('1') && !address.startsWith('3')) {
+                showNotification('Please enter a valid Bitcoin address');
+                return;
+            }
+            
+            if (isNaN(amount) || amount < 0.009) {
+                showNotification('Minimum withdrawal is 0.009 BTC');
+                return;
+            }
+            
+            if (amount > state.balance) {
+                showNotification('Insufficient balance');
+                return;
+            }
+            
+            // Process withdrawal
+            state.balance -= amount;
+            state.transactions.unshift({
+                type: 'withdrawal',
+                amount: amount.toFixed(8),
+                date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString(),
+                status: 'pending',
+                address: address
+            });
+            
+            saveState();
+            updateWithdrawScreen();
+            
+            showNotification(`Withdrawal request for ${amount.toFixed(8)} BTC submitted`);
+            document.getElementById('btcAddress').value = '';
+            document.getElementById('withdrawAmount').value = '';
+        }
+
+        // Initialize app when page loads
+        window.onload = initApp;
+    </script>
+</body>
+</html>
