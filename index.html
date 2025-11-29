@@ -477,7 +477,7 @@
         <!-- Header -->
         <div class="header">
             <div class="app-title">BitMiner Go</div>
-            <div class="app-subtitle">Live Bitcoin Mining</div>
+            <div class="app-subtitle">Bitcoin Mining</div>
         </div>
         
         <!-- Navigation -->
@@ -1110,8 +1110,8 @@
                 return;
             }
             
-            if (isNaN(amount) || amount < 0.009) {
-                showNotification('Minimum withdrawal is 0.009 BTC');
+            if (isNaN(amount) || amount < 0.0001) {
+                showNotification('Minimum withdrawal is 0.0001 BTC');
                 return;
             }
             
